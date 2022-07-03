@@ -8,7 +8,7 @@ Intoduction
 Installation
 ------------
 - Firstly make sure Node.Js is installed in your machine if note Download it from [https://nodejs.org/en/download/](url)
-- Download the Code files and .json File.
+- Download the Code file
 - Open VS CODE and a folder where you installed codefile
 - Open terminal and write this  `npm init -y`
 - And now you can see Project.js file 
