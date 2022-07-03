@@ -1,0 +1,153 @@
+#!/usr/bin/env node
+
+let input=process.argv.slice(2);
+let fs=require("fs");
+let path=require("path");
+//console.log(input);
+let command=input[0];
+let types={
+    media : ["mp4","mkv"],
+    archives : ["zip","7z","rar","tar","gz","ar","iso","xz"],
+    documents : ["docx","doc",'pdf','xlsx','xls','odp','odt','ods','odg','odf','txt','ps','tax','PDF'],
+    apps : ['exe','dmg','pkg','deb'],
+    pictures : ['jpg','jpeg','png'],
+}
+
+switch(command){
+    case "tree":
+        Treefun(input[1]);
+        break;
+    case "organize":
+        organizefun(input[1]);
+        break;
+    case "help":
+        helpfun();
+        break;
+    default :
+        console.log("Please input right command");
+}
+
+function Treefun(direPath){
+    if(direPath==undefined){
+        
+        treehelper(process.cwd(),"")
+        return;
+    }
+    else{
+        let doesExist=fs.existsSync(direPath);
+        if(doesExist){
+            treehelper(direPath,"");
+        }
+        else {
+            console.log("Please enter the correct path");
+            return;
+        }
+    }
+}
+
+function treehelper(dirpath,indent){
+    if(fs.lstatSync(dirpath).isFile()){
+        let fname=path.basename(dirpath);
+        console.log(indent+"├─── "+fname);
+    }else{
+        let dirname=path.basename(dirpath);
+        console.log(indent+"└─── "+dirname)
+        let childs=fs.readdirSync(dirpath);
+        for(let i=0;i<childs.length;i++){
+            let childpath=path.join(dirpath,childs[i]);
+            treehelper(childpath,indent+"\t");
+        }
+    }
+}
+
+function organizefun(direPath){
+    let destination;
+    if(direPath==undefined){
+        destination=process.cwd();
+        if(fs.existsSync(destination)==false) {
+            fs.mkdirSync(destination);
+        }
+        console.log("Organizing Your Files....");
+        organizehelp(direPath,destination);
+        console.log(`
+        ORGANIZED
+            now you can view organized_files Directory in your source directory...`);
+        return;
+    }
+    else{
+        let doesExist=fs.existsSync(direPath);
+        if(doesExist){
+            destination=path.join(direPath,"Organized_files");
+            if(fs.existsSync(destination)==false) {
+                fs.mkdirSync(destination);
+            }
+            console.log("Organizing Your Files....");
+            organizehelp(direPath,destination);
+            console.log(`
+            ORGANIZED
+                now you can view organized_files Directory in your source directory...`);
+        }
+        else {
+            console.log("Please enter the correct path");
+            return;
+        }
+    }
+}
+
+
+function organizehelp(src,dest){
+    let allFiles=fs.readdirSync(src);
+    //console.log(allFiles);
+    for(let i=0;i<allFiles.length;i++){
+        let filePath=path.join(src,allFiles[i]);
+        if(fs.lstatSync(filePath).isFile()){
+            //console.log(allFiles[i]);
+            let ext = path.extname(allFiles[i]);
+            ext=ext.slice(1);
+            let category=getCategory(ext);
+            //console.log(allFiles[i]," ---> ",category);
+
+            sendFiles(filePath,dest,category);
+        }
+    }
+}
+
+
+function sendFiles(srcFile,destFinal,cat){
+    let catPath;
+    if(cat==undefined) {
+        catPath=path.join(destFinal,"others");
+        cat="others";
+    }
+    else catPath = path.join(destFinal,cat);
+    //console.log(catPath,"--->",cat);
+    if(fs.existsSync(catPath)==false){
+        fs.mkdirSync(catPath);
+        //console.log("file",catPath);
+    }
+    let filepath=path.basename(srcFile);
+    let destfilepath=path.join(catPath,filepath);
+    fs.copyFileSync(srcFile,destfilepath);
+    fs.unlinkSync(srcFile);
+    console.log(filepath,"copied to ---> ",cat);
+}
+
+function getCategory(ext){
+    for(let type in types){
+        let curr=types[type];
+        for(let i=0;i<curr.length;i++){
+            if(ext == curr[i]){
+                return type;
+            }
+        }
+    }
+}
+
+
+function helpfun(){
+    console.log(`
+    List of All commands 
+        node project.js tree "directorypath"
+        node project.js organize "directorypath"
+        node project.js path`);
+}
